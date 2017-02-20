@@ -23,7 +23,7 @@ class TerminatorSplit(object):
 
     DEFAULT = {
         'config': os.path.expanduser('~/.config/terminator/config'),
-        'command': "ssh -i ~/.ssh/test-generic-ec2.pem {}; bash",
+        'command': "ssh -i ~/.ssh/trsplit-generic-ec2.pem {}; bash",
         'terminator': '/usr/bin/terminator'
     }
 
