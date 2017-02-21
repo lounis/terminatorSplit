@@ -9,6 +9,8 @@ https://github.com/AlekseyChudov/terminator-split
 import argparse
 import logging
 import os
+import sys
+import glob
 import resource
 import tempfile
 
@@ -18,14 +20,16 @@ __author__ = 'Aleksey Chudov <aleksey.chudov@gmail.com>'
 __date__ = '24 Dec 2016'
 __version__ = '1.0.1'
 
+VALID_KEY_PAIR_NAME = glob.glob(os.environ['HOME'] + "/.ssh/*.pem")
+
+DEFAULT = {
+    'config': os.path.expanduser('~/.config/terminator/config'),
+    'command': "ssh -i ~/.ssh/trsplit-generic-ec2.pem {}; bash",
+    'terminator': '/usr/bin/terminator'
+}
+
 
 class TerminatorSplit(object):
-
-    DEFAULT = {
-        'config': os.path.expanduser('~/.config/terminator/config'),
-        'command': "ssh -i ~/.ssh/trsplit-generic-ec2.pem {}; bash",
-        'terminator': '/usr/bin/terminator'
-    }
 
     def __init__(self):
         self._args, self._unknown_args = self._parse_args()
@@ -48,7 +52,7 @@ class TerminatorSplit(object):
         parser.add_argument('-g', '--config')
         parser.add_argument('-t', '--terminator')
         parser.add_argument('hostname', nargs='+')
-        namespace = argparse.Namespace(**self.DEFAULT)
+        namespace = argparse.Namespace(**DEFAULT)
         return parser.parse_known_args(namespace=namespace)
 
     def _is_debug(self):
@@ -72,6 +76,7 @@ class TerminatorSplit(object):
         parent = self._next_child()
         self._layout = {parent: {'parent': '', 'type': 'Window'}}
         self._split_layout(parent, self._args.hostname)
+        config['layouts'] = {'default': None}
         config['layouts']['default'] = self._layout
 
     def _next_child(self):
@@ -170,6 +175,16 @@ class TerminatorSplit(object):
 
 
 def main():
+    while True:
+        sys.stdout.write(
+            "Please enter key pair name :\n" + "\n".join([(str(i) + " - " + e) for i, e in enumerate(VALID_KEY_PAIR_NAME)]) + "\nPlease enter " + " or ".join([str(i) for i in range(len(VALID_KEY_PAIR_NAME))]) + " : ")
+        choice = raw_input()
+        try:
+            KEY_FILENAME = VALID_KEY_PAIR_NAME[int(choice)]
+            break
+        except IndexError:
+            pass
+    DEFAULT['command'] = "ssh -i " + KEY_FILENAME + " {}; bash"
     TerminatorSplit()
 
 if __name__ == '__main__':
